@@ -3,10 +3,17 @@ kind: Deployment
 metadata:
   name: flask-app-deployment
 spec:
-  replicas: 1 # This will be updated in Task 3
+  replicas: 3
   selector:
     matchLabels:
       app: flask-app
+  
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+      
   template:
     metadata:
       labels:
@@ -14,8 +21,17 @@ spec:
     spec:
       containers:
       - name: flask-app
-        # IMPORTANT: This image name is a placeholder
-        # Change 'reha-yamin' to the correct Docker Hub username
-        image: reha-yamin/flask-k8s-app:latest
+        # --- THIS LINE IS UPDATED WITH YOUR ID ---
+        image: jhiba1/flask-k8s-app:latest 
+        # ----------------------------------------
+        
         ports:
         - containerPort: 5000
+        
+        resources:
+          requests:
+            cpu: "100m" 
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "128Mi"
