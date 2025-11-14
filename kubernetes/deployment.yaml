@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app-deployment
+spec:
+  replicas: 1 # This will be updated in Task 3
+  selector:
+    matchLabels:
+      app: flask-app
+  template:
+    metadata:
+      labels:
+        app: flask-app
+    spec:
+      containers:
+      - name: flask-app
+        # IMPORTANT: This image name is a placeholder
+        # Change 'reha-yamin' to the correct Docker Hub username
+        image: reha-yamin/flask-k8s-app:latest
+        ports:
+        - containerPort: 5000
