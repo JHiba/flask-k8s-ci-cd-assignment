@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-app-service
+spec:
+  # This type will be used in Task 3 to expose the app
+  type: NodePort 
+  selector:
+    app: flask-app # This MUST match the 'app' label in your deployment
+  ports:
+    - protocol: TCP
+      port: 80 # Port on the service itself
+      targetPort: 5000 # Port on the container (where Flask is running)
