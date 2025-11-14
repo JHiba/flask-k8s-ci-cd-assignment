@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - '**'  # run on pushes to any branch
+      - '**'
 
 jobs:
   build-and-test:
@@ -23,14 +23,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Lint with flake8 (max line length 90)
+      - name: Lint with flake8
         run: |
           flake8 . --max-line-length=90
 
-      - name: Run unit tests with pytest
+      - name: Run pytest
         run: |
           pytest
 
-            - name: Build Docker image
+      - name: Build Docker image
         run: |
           docker build . --file Dockerfile --tag flask-k8s-app:latest
