@@ -1,0 +1,39 @@
+name: Python CI
+
+on:
+  push:
+    branches: [ "**" ] # Triggers on pushes to all branches (as per Task 2)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        # Install testing tools for Task 2
+        # pip install flake8 pytest
+
+    - name: Lint with flake8 (placeholder)
+      run: |
+        echo "Linting will be configured in Task 2"
+        # flake8 . --count --max-line-length=90 --statistics
+
+    - name: Test with pytest (placeholder)
+      run: |
+        echo "Pytest will be configured in Task 2"
+        # pytest
+
+    - name: Build Docker image (placeholder)
+      run: |
+        echo "Docker build will be configured in Task 2"
+        # docker build . --file Dockerfile --tag my-image:latest
+wab-kvdt-xgy
