@@ -1,39 +1,36 @@
-name: Python CI
+name: CI
 
 on:
   push:
-    branches: [ "**" ] # Triggers on pushes to all branches (as per Task 2)
+    branches:
+      - '**'  # run on pushes to any branch
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        # Install testing tools for Task 2
-        # pip install flake8 pytest
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-    - name: Lint with flake8 (placeholder)
-      run: |
-        echo "Linting will be configured in Task 2"
-        # flake8 . --count --max-line-length=90 --statistics
+      - name: Lint with flake8 (max line length 90)
+        run: |
+          flake8 . --max-line-length=90
 
-    - name: Test with pytest (placeholder)
-      run: |
-        echo "Pytest will be configured in Task 2"
-        # pytest
+      - name: Run unit tests with pytest
+        run: |
+          pytest
 
-    - name: Build Docker image (placeholder)
-      run: |
-        echo "Docker build will be configured in Task 2"
-        # docker build . --file Dockerfile --tag my-image:latest
-wab-kvdt-xgy
+            - name: Build Docker image
+        run: |
+          docker build . --file Dockerfile --tag flask-k8s-app:latest

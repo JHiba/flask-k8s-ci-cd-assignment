@@ -26,4 +26,3 @@ ENV FLASK_APP=app.py
 
 # Run flask
 CMD ["flask", "run", "--host=0.0.0.0"]
-wab-kvdt-xgy
