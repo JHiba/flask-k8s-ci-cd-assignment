@@ -2,59 +2,64 @@ pipeline {
     agent any
 
     environment {
-        // Set your Docker Hub username
-        DOCKERHUB_USERNAME = "jhiba1"
-        // The ID of the secret text credential Reha will create in Jenkins
-        DOCKERHUB_CREDENTIAL_ID = "dockerhub-password"
+        // Local image name that your Kubernetes deployment uses
+        DOCKER_IMAGE   = "flask-k8s-app"
+        DOCKER_TAG     = "latest"
+
+        // Adjust these to match your deployment YAML
+        K8S_DEPLOYMENT = "flask-app-deployment"
+        K8S_NAMESPACE  = "default"
     }
 
     stages {
-        // Stage 1: Build the image and push it to Docker Hub
         stage('Build Docker Image') {
             steps {
-                echo 'Building and Pushing Docker Image...'
-                
-                // Build the image with your Docker ID
-                sh "docker build -t ${DOCKERHUB_USERNAME}/flask-k8s-app:latest ."
-                
-                // Log in to Docker Hub using the secure Jenkins credential
-                // We wrap this in 'withCredentials'
-                withCredentials([string(credentialsId: DOCKERHUB_CREDENTIAL_ID, variable: 'DOCKERHUB_PASSWORD')]) {
-                    sh "docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}"
-                }
-                
-                // Push the image to Docker Hub
-                sh "docker push ${DOCKERHUB_USERNAME}/flask-k8s-app:latest"
+                echo "Building Docker image %DOCKER_IMAGE%:%DOCKER_TAG% ..."
+                bat """
+                  docker version
+                  docker build -t %DOCKER_IMAGE%:%DOCKER_TAG% .
+                """
+                // If you need to push to Docker Hub, add here:
+                // bat "docker login -u YOUR_USER -p YOUR_PASSWORD"
+                // bat "docker tag %DOCKER_IMAGE%:%DOCKER_TAG% YOUR_USER/%DOCKER_IMAGE%:%DOCKER_TAG%"
+                // bat "docker push YOUR_USER/%DOCKER_IMAGE%:%DOCKER_TAG%"
             }
         }
 
-        // Stage 2: Deploy the new image to Kubernetes
         stage('Deploy to Kubernetes') {
             steps {
-                echo 'Deploying to Kubernetes...'
-                // Apply the configurations. K8s will see the new image tag and start a rollout.
-                sh 'kubectl apply -f kubernetes/'
+                echo "Deploying manifests to Kubernetes..."
+                bat """
+                  kubectl config current-context
+                  kubectl apply -f kubernetes/deployment.yaml
+                  kubectl apply -f kubernetes/service.yaml
+                """
             }
         }
 
-        // Stage 3: Verify the deployment was successful
         stage('Verify Deployment') {
             steps {
-                echo 'Verifying deployment...'
-                // Wait for the rollout to complete
-                sh 'kubectl rollout status deployment/flask-app-deployment'
-                
-                // Show the running pods and services
-                sh 'kubectl get pods,services'
+                echo "Verifying rollout and listing resources..."
+                bat """
+                  kubectl rollout status deployment/%K8S_DEPLOYMENT% --namespace=%K8S_NAMESPACE% --timeout=120s
+                  kubectl get pods,services --namespace=%K8S_NAMESPACE%
+                """
             }
         }
     }
+
     post {
-        // This 'always' block runs no matter what, to clean up
         always {
-            echo 'Logging out of Docker Hub...'
-            // Log out of Docker Hub to be safe
-            sh 'docker logout'
+            echo "Post-build: logging out of Docker Hub (if logged in)..."
+            bat """
+              docker logout || echo "Docker logout failed or not logged in – continuing..."
+            """
+        }
+        success {
+            echo "CI/CD pipeline completed successfully 🎉"
+        }
+        failure {
+            echo "CI/CD pipeline FAILED – check the console output ❌"
         }
     }
 }
