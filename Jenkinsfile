@@ -2,14 +2,16 @@ pipeline {
     agent any
 
     environment {
-        // Must match your Kubernetes deployment.yaml
-        DOCKER_IMAGE   = "rehayamin9/flask-k8s-app"
-        DOCKER_TAG     = "latest"
+        // Docker image info
+        DOCKER_IMAGE = "rehayamin9/flask-k8s-app"
+        DOCKER_TAG   = "latest"
 
-        // Must match metadata.name in deployment.yaml
+        // Kubernetes settings
         K8S_DEPLOYMENT = "flask-app-deployment"
-        // You didn’t set a namespace in YAML, so it’s "default"
         K8S_NAMESPACE  = "default"
+
+        // IMPORTANT: let kubectl know where the kubeconfig is
+        KUBECONFIG = "C:\\kube\\config"
     }
 
     stages {
@@ -17,36 +19,34 @@ pipeline {
             steps {
                 echo "Building Docker image %DOCKER_IMAGE%:%DOCKER_TAG% ..."
                 bat """
-                  docker version
-                  docker build -t %DOCKER_IMAGE%:%DOCKER_TAG% .
+                docker version
+                docker build -t %DOCKER_IMAGE%:%DOCKER_TAG% .
                 """
-                // If you later want to push to Docker Hub, add:
-                // bat "docker login -u YOUR_USER -p YOUR_PASSWORD"
-                // bat "docker push %DOCKER_IMAGE%:%DOCKER_TAG%"
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                echo "Deploying to Kubernetes..."
+                echo 'Deploying to Kubernetes...'
                 bat """
-                  kubectl config current-context
-                  kubectl apply -f kubernetes/
+                kubectl config current-context
+                kubectl apply --validate=false -f kubernetes/deployment.yaml
+                kubectl apply --validate=false -f kubernetes/service.yaml
                 """
             }
         }
 
         stage('Verify Deployment') {
             steps {
-                echo "Verifying deployment rollout and listing resources..."
+                echo 'Verifying deployment rollout and services...'
                 bat """
-                  kubectl rollout status deployment/%K8S_DEPLOYMENT% --namespace=%K8S_NAMESPACE%
-                  echo.
-                  echo Pods:
-                  kubectl get pods --namespace=%K8S_NAMESPACE%
-                  echo.
-                  echo Services:
-                  kubectl get services --namespace=%K8S_NAMESPACE%
+                kubectl rollout status deployment/%K8S_DEPLOYMENT% --namespace=%K8S_NAMESPACE%
+
+                echo Pods:
+                kubectl get pods --namespace=%K8S_NAMESPACE%
+
+                echo Services:
+                kubectl get services --namespace=%K8S_NAMESPACE%
                 """
             }
         }
@@ -57,7 +57,7 @@ pipeline {
             echo 'Pipeline finished (post block).'
         }
         success {
-            echo '✅ Deployment succeeded.'
+            echo 'Deployment succeeded.'
         }
         failure {
             echo '❌ Pipeline failed – check the logs above.'
